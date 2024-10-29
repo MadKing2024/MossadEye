@@ -66,6 +66,29 @@ class MossadEye:
         
         return results
 
+    def check_telegram(self, number):
+    clean_number = number.replace('+', '').replace(' ', '')
+    url = f"https://t.me/{clean_number}"
+    try:
+        response = requests.get(url, headers=self.headers, timeout=10)
+        if response.status_code == 200:
+            return {
+                'exists': True,
+                'url': url,
+                'status': 'Active'
+            }
+        return {
+            'exists': False,
+            'url': url,
+            'status': 'Not Found'
+        }
+    except Exception as e:
+        return {
+            'exists': False,
+            'url': url,
+            'status': f'Error: {str(e)}'
+        }
+
     def check_whatsapp(self, number):
         clean_number = number.replace('+', '').replace(' ', '')
         url = f"https://wa.me/{clean_number}"
