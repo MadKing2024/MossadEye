@@ -4,7 +4,6 @@ import phonenumbers
 from phonenumbers import carrier, geocoder, timezone
 from bs4 import BeautifulSoup
 import time
-import concurrent.futures
 from colorama import Fore, Style, init
 import os
 from datetime import datetime
@@ -53,45 +52,38 @@ class MossadEye:
                 'target': number,
                 'basic_info': self.get_basic_info(number),
                 'social_media': self.check_social_media(number),
-                'reputation': self.check_reputation(number),
-                'leaks': self.check_data_leaks(number),
-                'carrier_info': self.get_carrier_info(number),
-                'location': self.get_location_info(number),
-                'activity': self.check_online_activity(number),
-                'deep_web': self.search_deep_web(number),
-                'reverse_lookup': self.reverse_number_lookup(number),
                 'whatsapp_intel': self.gather_whatsapp_intel(number)
             }
             pbar.update(100)
         
         return results
 
-    def check_telegram(self, number):
-    clean_number = number.replace('+', '').replace(' ', '')
-    url = f"https://t.me/{clean_number}"
-    try:
-        response = requests.get(url, headers=self.headers, timeout=10)
-        if response.status_code == 200:
-            return {
-                'exists': True,
-                'url': url,
-                'status': 'Active'
-            }
-        return {
-            'exists': False,
-            'url': url,
-            'status': 'Not Found'
-        }
-    except Exception as e:
-        return {
-            'exists': False,
-            'url': url,
-            'status': f'Error: {str(e)}'
-        }
-
     def check_whatsapp(self, number):
         clean_number = number.replace('+', '').replace(' ', '')
         url = f"https://wa.me/{clean_number}"
+        try:
+            response = requests.get(url, headers=self.headers, timeout=10)
+            if response.status_code == 200:
+                return {
+                    'exists': True,
+                    'url': url,
+                    'status': 'Active'
+                }
+            return {
+                'exists': False,
+                'url': url,
+                'status': 'Not Found'
+            }
+        except Exception as e:
+            return {
+                'exists': False,
+                'url': url,
+                'status': f'Error: {str(e)}'
+            }
+
+    def check_telegram(self, number):
+        clean_number = number.replace('+', '').replace(' ', '')
+        url = f"https://t.me/{clean_number}"
         try:
             response = requests.get(url, headers=self.headers, timeout=10)
             if response.status_code == 200:
@@ -128,22 +120,14 @@ class MossadEye:
     def check_social_media(self, number):
         platforms = {
             'whatsapp': self.check_whatsapp(number),
-            'telegram': self.check_telegram(number),
-            'facebook': self.check_facebook(number),
-            'instagram': self.check_instagram(number),
-            'linkedin': self.check_linkedin(number),
-            'tiktok': self.check_tiktok(number)
+            'telegram': self.check_telegram(number)
         }
-        return self.parallel_check(platforms)
+        return platforms
 
     def gather_whatsapp_intel(self, number):
         return {
             'profile_exists': self.check_wa_profile(number),
-            'business_info': self.check_wa_business(number),
-            'status': self.get_wa_status(number),
-            'profile_picture': self.get_wa_profile_pic(number),
-            'last_seen': self.get_wa_last_seen(number),
-            'groups': self.find_wa_groups(number)
+            'business_info': self.check_wa_business(number)
         }
 
     def check_wa_profile(self, number):
@@ -176,8 +160,6 @@ class MossadEye:
     def print_summary(self, results):
         print(f"\n{Fore.YELLOW}=== Intelligence Summary ==={Style.RESET_ALL}")
         print(f"Target Number: {results['target']}")
-        print(f"Region: {results['basic_info']['region']}")
-        print(f"Carrier: {results['basic_info']['carrier']}")
-        print(f"Social Media Presence: {len([x for x in results['social_media'].values() if x])} platforms")
-        print(f"Data Leaks Found: {len(results['leaks'])}")
+        print(f"Region: {results['basic_info'].get('region', 'Unknown')}")
+        print(f"Carrier: {results['basic_info'].get('carrier', 'Unknown')}")
         print(f"WhatsApp Status: {'Active' if results['whatsapp_intel']['profile_exists'] else 'Not Found'}")
