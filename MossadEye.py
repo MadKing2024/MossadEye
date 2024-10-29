@@ -46,6 +46,28 @@ class MossadEye:
         """
         print(f"{Fore.CYAN}{banner}{Style.RESET_ALL}")
 
+    def check_whatsapp(self, number):
+    clean_number = number.replace('+', '').replace(' ', '')
+    url = f"https://wa.me/{clean_number}"
+    try:
+        response = requests.get(url, headers=self.headers, timeout=10)
+        if response.status_code == 200:
+            return {
+                'exists': True,
+                'url': url,
+                'status': 'Active'
+            }
+        return {
+            'exists': False,
+            'url': url,
+            'status': 'Not Found'
+        }
+    except Exception as e:
+        return {
+            'exists': False,
+            'url': url,
+            'status': f'Error: {str(e)}'
+        }
     def analyze_target(self, number):
         print(f"\n{Fore.GREEN}[+] Initiating reconnaissance on target: {number}{Style.RESET_ALL}")
         
